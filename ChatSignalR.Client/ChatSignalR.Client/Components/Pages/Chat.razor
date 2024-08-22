@@ -1,0 +1,75 @@
+﻿@page "/chat"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+
+@using Microsoft.AspNetCore.SignalR.Client
+
+<h3>Chat</h3>
+
+<input @bind="userName" placeholder="Enter your name" />
+<input @bind="message" placeholder="Enter your message" @onkeypress="OnKeyPress" />
+<button @onclick="SendMessage">Send</button>
+
+<ul>
+    @foreach (var msg in messages)
+    {
+        <li><strong>@msg.UserName</strong>: @msg.MessageText</li>
+    }
+</ul>
+
+@code {
+    private HubConnection? hubConnection;
+    private string userName;
+    private string message;
+    private List<ChatMessage> messages = new List<ChatMessage>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("https://localhost:7051/chat"))
+            .WithAutomaticReconnect()
+            .Build();
+
+
+
+        hubConnection.On<string, string>("ReceiveMessage", (userName, message) =>
+        {
+            messages.Add(new ChatMessage { UserName = userName, MessageText = message });
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+        await hubConnection.SendAsync("JoinChat");
+    }
+
+    private async Task SendMessage()
+    {
+        if (!string.IsNullOrEmpty(message))
+        {
+            await hubConnection.SendAsync("SendMessage", userName, message);
+            message = string.Empty;
+        }
+    }
+
+    private void OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            SendMessage();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+
+    private class ChatMessage
+    {
+        public string UserName { get; set; }
+        public string MessageText { get; set; }
+    }
+}
