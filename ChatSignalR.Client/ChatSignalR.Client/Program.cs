@@ -1,4 +1,7 @@
 using ChatSignalR.Client.Components;
+using ChatSignalR.Client.Services;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace ChatSignalR.Client
 {
@@ -8,11 +11,13 @@ namespace ChatSignalR.Client
         {
             var builder = WebApplication.CreateBuilder(args);
 
+           
+
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
 
-
+            builder.Services.AddSingleton<ChatHubService>();
 
             var app = builder.Build();
 

@@ -1,7 +1,21 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@inject NavigationManager navigationManager
 
-<PageTitle>Home</PageTitle>
+<input @bind="_chatName" placeholder="Enter chat name" />
+<input @bind="_userName" placeholder="Enter your name" />
 
-<h1>Hello, world!</h1>
+<button @onclick="Connect">Send</button>
 
-Welcome to your new app.
+@code {
+    private string? _chatName;
+    private string? _userName;
+
+    private void Connect()
+    {
+        if(!string.IsNullOrWhiteSpace(_chatName) && !string.IsNullOrWhiteSpace(_userName))
+        {
+            navigationManager.NavigateTo($"/chat_chat={_chatName}&user={_userName}");
+        }
+    }
+}

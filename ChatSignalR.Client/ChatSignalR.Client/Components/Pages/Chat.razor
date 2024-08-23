@@ -1,54 +1,65 @@
-﻿@page "/chat"
+﻿@page "/chat_chat={ChatName}&user={UserName}"
 @rendermode InteractiveServer
+@using ChatSignalR.Client.Services
 @inject NavigationManager NavigationManager
+@inject ChatHubService hubService
 
 @using Microsoft.AspNetCore.SignalR.Client
 
 <h3>Chat</h3>
-
-<input @bind="userName" placeholder="Enter your name" />
-<input @bind="message" placeholder="Enter your message" @onkeypress="OnKeyPress" />
+<input @bind="_message" placeholder="Enter your message" @onkeypress="OnKeyPress" />
 <button @onclick="SendMessage">Send</button>
+<button @onclick="LeaveChat">Leave Chat</button>
 
 <ul>
-    @foreach (var msg in messages)
+    @foreach (var msg in _messages)
     {
-        <li><strong>@msg.UserName</strong>: @msg.MessageText</li>
+        <li><strong>@msg.UserName</strong>: @msg.MessageText <i>Sentiment: @msg.Sentiment</i></li>
     }
 </ul>
 
 @code {
-    private HubConnection? hubConnection;
-    private string userName;
-    private string message;
-    private List<ChatMessage> messages = new List<ChatMessage>();
+    [Parameter]
+    public string ChatName { get; set; } = "chat1";
+    [Parameter]
+    public string UserName { get; set; } = "user1";
+    private string? _message;
+    private List<ChatMessage> _messages = new List<ChatMessage>();
 
     protected override async Task OnInitializedAsync()
     {
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("https://localhost:7051/chat"))
-            .WithAutomaticReconnect()
-            .Build();
-
-
-
-        hubConnection.On<string, string>("ReceiveMessage", (userName, message) =>
+        if (hubService.HubConnection.State == HubConnectionState.Disconnected)
         {
-            messages.Add(new ChatMessage { UserName = userName, MessageText = message });
-            InvokeAsync(StateHasChanged);
-        });
+            await hubService.StartAsync();
+            await hubService.HubConnection.SendAsync("JoinChat", ChatName, UserName);
+        }
 
-        await hubConnection.StartAsync();
-        await hubConnection.SendAsync("JoinChat");
+            hubService.HubConnection.On<ChatMessage>("ReceiveMessage", (message) =>
+            {
+                OnMessageRecieved(message);
+        });
+    }
+
+
+    private void OnMessageRecieved(ChatMessage message)
+    {
+        _messages.Add(message);
+        InvokeAsync(StateHasChanged);
     }
 
     private async Task SendMessage()
     {
-        if (!string.IsNullOrEmpty(message))
+        if (!string.IsNullOrEmpty(_message))
         {
-            await hubConnection.SendAsync("SendMessage", userName, message);
-            message = string.Empty;
+            await hubService.HubConnection.SendAsync("SendMessage", ChatName, UserName, _message);
+            _message = string.Empty;
         }
+    }
+
+    private async Task LeaveChat()
+    {
+        await hubService.HubConnection.SendAsync("LeaveChat", ChatName, UserName);
+        NavigationManager.NavigateTo("/");
     }
 
     private void OnKeyPress(KeyboardEventArgs e)
@@ -61,15 +72,13 @@
 
     public async ValueTask DisposeAsync()
     {
-        if (hubConnection is not null)
-        {
-            await hubConnection.DisposeAsync();
-        }
+        await hubService.DisposeAsync();
     }
 
-    private class ChatMessage
+    public record ChatMessage(string UserName, string MessageText, MessageSentiment Sentiment);
+
+    public enum MessageSentiment
     {
-        public string UserName { get; set; }
-        public string MessageText { get; set; }
+        Positive, Neutral, Negative, Mixed
     }
 }
