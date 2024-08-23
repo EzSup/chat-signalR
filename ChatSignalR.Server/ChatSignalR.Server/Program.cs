@@ -1,5 +1,5 @@
 
-using ChatSignalR.Server.Data;
+using ChatSignalR.DataAccess.AzureSQL;
 using ChatSignalR.Server.Hubs;
 using Microsoft.EntityFrameworkCore;
 
