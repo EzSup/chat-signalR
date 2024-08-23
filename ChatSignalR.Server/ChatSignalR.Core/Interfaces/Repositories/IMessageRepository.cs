@@ -9,6 +9,6 @@ namespace ChatSignalR.Core.Interfaces.Repositories
 {
     public interface IMessageRepository : IRepository<Message>
     {
-        Task<IEnumerable<Message>> GetByFilter(string? contentContains = "", Guid? authorId = null, Guid? chatId = null, int pageNum = 1, int pageSize = 100);
+        Task<IEnumerable<Message>> GetByFilter(string? contentContains = "", string? authorNameContains = null, string? chatNameContains = null, int pageNum = 1, int pageSize = 100);
     }
 }

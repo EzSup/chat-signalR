@@ -27,6 +27,7 @@ namespace ChatSignalR.DataAccess.AzureSQL.Repositories
             obj.Created = DateTime.UtcNow;
 
             await _context.Messages.AddAsync(obj);
+            await _context.SaveChangesAsync();
             return obj.Id;
         }
 
@@ -48,8 +49,6 @@ namespace ChatSignalR.DataAccess.AzureSQL.Repositories
         public async Task<Message?> Get(Guid id)
         {
             return await _context.Messages
-                .Include(message => message.Author)
-                .Include(message => message.Chat)
                 .AsNoTracking()
                 .SingleOrDefaultAsync(message => message.Id == id);
         }
@@ -59,7 +58,7 @@ namespace ChatSignalR.DataAccess.AzureSQL.Repositories
             return await _context.Messages.AsNoTracking().ToListAsync();
         }
 
-        public async Task<IEnumerable<Message>> GetByFilter(string? contentContains = "", Guid? authorId = null, Guid? chatId = null, int pageNum = 1, int pageSize = 100)
+        public async Task<IEnumerable<Message>> GetByFilter(string? contentContains = "", string? authorNameContains = null, string? chatNameContains = null, int pageNum = 1, int pageSize = 100)
         {
             var query = _context.Messages.AsNoTracking();
 
@@ -67,13 +66,13 @@ namespace ChatSignalR.DataAccess.AzureSQL.Repositories
             {
                 query = query.Where(item => item.MessageContent.ToLower().Contains(contentContains.ToLower()));
             }
-            if (authorId is not null)
+            if (!String.IsNullOrWhiteSpace(authorNameContains))
             {
-                query = query.Where(item => item.AuthorId == authorId);
+                query = query.Where(item => item.AuthorName.ToLower().Contains(authorNameContains.ToLower()));
             }
-            if (chatId is not null)
+            if (! String.IsNullOrWhiteSpace(chatNameContains))
             {
-                query = query.Where(item => item.ChatId == chatId);
+                query = query.Where(item => item.ChatName.ToLower().Contains(chatNameContains.ToLower()));
             }
 
             query = query.Skip((pageNum - 1) * pageSize).Take(pageSize);

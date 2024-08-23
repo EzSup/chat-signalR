@@ -3,12 +3,15 @@
     public class Message
     {
         public Guid Id { get; set; }
-        public Guid AuthorId { get; set; }
-        public Guid ChatId { get; set; }
+        public string? AuthorName { get; set; }
+        public string? ChatName { get; set; }
         public string? MessageContent { get; set; }
         public DateTime? Created { get; set; } = DateTime.UtcNow;
 
-        public User? Author { get; set; }
-        public Chat? Chat { get; set; }
+
+        public double PositiveScore { get; set; }
+        public double NeutralScore { get; set; }
+        public double NegativeScore { get; set; }
+        
     }
 }
