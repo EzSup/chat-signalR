@@ -13,6 +13,7 @@ namespace ChatSignalR.Core.Interfaces.Services
     public interface IMessageService
     {
         Task<Message?> Get(Guid id);
-        Task<(bool created, MessageSentiment sentiment)> RegisterMessage(MessageCreateDto dto);
+        Task<Guid> RegisterMessage(MessageCreateDto dto);
+        Task<IEnumerable<Message>> GetChatHistory(string chatName);
     }
 }

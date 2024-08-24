@@ -8,6 +8,8 @@ namespace ChatSignalR.Server.DTOs
         public string MessageText { get; set; }
         public MessageSentiment Sentiment { get; set; }
 
+
+
         public MessageDto(string UserName, string MessageText, MessageSentiment Sentiment)
         {
             this.UserName = UserName;
@@ -15,15 +17,13 @@ namespace ChatSignalR.Server.DTOs
             this.Sentiment = Sentiment;
         }
 
-        public MessageDto(Message message)
-        {
-            this.UserName = message?.AuthorName ?? "unknown";
-            this.MessageText = message?.MessageContent ?? "no data";
-        }
+        public MessageDto(string UserName, string MessageText) : this(UserName, MessageText, MessageSentiment.Neutral) { }
+
+        public MessageDto(Message message) : 
+            this(message?.AuthorName ?? "unknown", 
+                message?.MessageContent ?? "no data", 
+                message?.Sentiment ?? MessageSentiment.Neutral)
+        {  }
     }
 
-    public enum MessageSentiment
-    {
-        Positive, Neutral,  Negative, Mixed
-    }
 }

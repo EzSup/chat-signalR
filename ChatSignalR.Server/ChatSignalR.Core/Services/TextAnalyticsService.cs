@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Azure.AI.TextAnalytics;
 using ChatSignalR.Core.Interfaces.Services;
+using ChatSignalR.DataAccess.AzureSQL.Models;
 using ChatSignalR.Server.DTOs;
 using System;
 using System.Collections.Generic;

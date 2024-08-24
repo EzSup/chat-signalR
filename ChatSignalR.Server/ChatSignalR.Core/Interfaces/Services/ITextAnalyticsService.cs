@@ -1,4 +1,5 @@
-﻿using ChatSignalR.Server.DTOs;
+﻿using ChatSignalR.DataAccess.AzureSQL.Models;
+using ChatSignalR.Server.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

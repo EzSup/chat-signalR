@@ -24,7 +24,12 @@ namespace ChatSignalR.Core.Services
 
         public async Task<Message?> Get(Guid id) => await _messageRepository.Get(id);
 
-        public async Task<(bool created, MessageSentiment sentiment)> RegisterMessage(MessageCreateDto dto)
+        public async Task<IEnumerable<Message>> GetChatHistory(string chatName)
+        {
+            return await _messageRepository.GetByFilter(chatNameContains:chatName);
+        }
+
+        public async Task<Guid> RegisterMessage(MessageCreateDto dto)
         {
             var analyticsResult = await _textAnalyticsService.AnalyzeMessage(dto.messageContent);
             var message = new Message() { AuthorName = dto.userName, 
@@ -32,8 +37,9 @@ namespace ChatSignalR.Core.Services
                 MessageContent = dto.messageContent,
                 PositiveScore = analyticsResult.positiveScore,
                 NeutralScore = analyticsResult.neutralScore,
-                NegativeScore = analyticsResult.negativeScore};
-            return (await _messageRepository.Create(message) != Guid.Empty, analyticsResult.sentiment);
+                NegativeScore = analyticsResult.negativeScore,
+                Sentiment = (MessageSentiment)analyticsResult.sentiment};
+            return await _messageRepository.Create(message);
         }
 
 

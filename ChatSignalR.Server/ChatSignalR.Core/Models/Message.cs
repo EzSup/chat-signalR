@@ -8,10 +8,15 @@
         public string? MessageContent { get; set; }
         public DateTime? Created { get; set; } = DateTime.UtcNow;
 
-
+        public MessageSentiment Sentiment { get; set; }
         public double PositiveScore { get; set; }
         public double NeutralScore { get; set; }
         public double NegativeScore { get; set; }
         
+    }
+
+    public enum MessageSentiment
+    {
+        Positive, Neutral, Negative, Mixed
     }
 }

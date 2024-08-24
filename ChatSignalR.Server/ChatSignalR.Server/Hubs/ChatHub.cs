@@ -11,6 +11,7 @@ namespace ChatSignalR.Server.Hubs
     public interface IChatClient
     {
         public Task ReceiveMessage(MessageDto message);
+        public Task RecieveMessagesList(IEnumerable<MessageDto> messsages);
     }
 
     public class ChatHub : Hub<IChatClient>
@@ -25,19 +26,26 @@ namespace ChatSignalR.Server.Hubs
         public async Task SendMessage(string chatName, string userName, string message)
         {
             var registrationResult = await _messageService.RegisterMessage(new MessageCreateDto(userName, chatName, message));
-            await Clients.Group(chatName).ReceiveMessage(new MessageDto(userName, message, registrationResult.sentiment));
+            Message? newMessage = await _messageService.Get(registrationResult);
+            if(newMessage is null)
+                return;
+            await Clients.Group(chatName).ReceiveMessage(new MessageDto(newMessage));
         }
 
         public async Task JoinChat(string chatName, string userName)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, chatName);
+            var messages = await _messageService.GetChatHistory(chatName);
+            var messagesDtos = messages.Select(message => new MessageDto(message.AuthorName, message.MessageContent, message.Sentiment));
+            await Clients.Client(Context.ConnectionId).RecieveMessagesList(messagesDtos);
             await SendMessage(chatName, "Admin", $"{userName} just joined the chat!");
         }
 
         public async Task LeaveChat(string chatName, string userName)
-        {
+        {            
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatName);
             await SendMessage(chatName, "Admin", $"{userName} just left the chat!");
+            Context.Abort();
         }
     }
 }
