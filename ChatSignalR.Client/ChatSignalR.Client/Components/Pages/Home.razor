@@ -2,14 +2,23 @@
 @rendermode InteractiveServer
 @inject NavigationManager navigationManager
 
-<input @bind="_chatName" placeholder="Enter chat name" />
-<input @bind="_userName" placeholder="Enter your name" />
+<input @bind="_chatName" placeholder="Enter chat name" @onkeypress="OnKeyPress" />
+<input @bind="_userName" placeholder="Enter your name" @onkeypress="OnKeyPress" />
 
-<button @onclick="Connect">Send</button>
+<button @onclick="Connect">Join chat</button>
 
 @code {
     private string? _chatName;
     private string? _userName;
+
+
+    private void OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Code == "Enter")
+        {
+            Connect();
+        }
+    }
 
     private void Connect()
     {

@@ -6,7 +6,8 @@
 
 @using Microsoft.AspNetCore.SignalR.Client
 
-<h3>Chat</h3>
+<h3>Chat <strong>@ChatName</strong></h3>
+<h3>User name: <strong>@UserName</strong></h3>
 <input @bind="_message" placeholder="Enter your message" @onkeypress="OnKeyPress" />
 <button @onclick="SendMessage">Send</button>
 <button @onclick="LeaveChat">Leave Chat</button>
@@ -20,9 +21,9 @@
 
 @code {
     [Parameter]
-    public string ChatName { get; set; } = "chat1";
+    public string ChatName { get; set; }
     [Parameter]
-    public string UserName { get; set; } = "user1";
+    public string UserName { get; set; }
     private string? _message;
     private List<ChatMessage> _messages = new List<ChatMessage>();
 
@@ -34,12 +35,22 @@
             await hubService.HubConnection.SendAsync("JoinChat", ChatName, UserName);
         }
 
-            hubService.HubConnection.On<ChatMessage>("ReceiveMessage", (message) =>
+        hubService.HubConnection.On<IEnumerable<ChatMessage>>("RecieveMessagesList", (messages) =>
             {
-                OnMessageRecieved(message);
+                OnMessagesListRecieved(messages);
+            });
+
+        hubService.HubConnection.On<ChatMessage>("ReceiveMessage", (message) =>
+        {
+            OnMessageRecieved(message);
         });
     }
 
+    private void OnMessagesListRecieved(IEnumerable<ChatMessage> messages)
+    {
+        _messages = messages.ToList();
+        InvokeAsync(StateHasChanged);
+    }
 
     private void OnMessageRecieved(ChatMessage message)
     {
@@ -64,7 +75,7 @@
 
     private void OnKeyPress(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter")
+        if (e.Code == "Enter")
         {
             SendMessage();
         }
