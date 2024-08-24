@@ -15,13 +15,8 @@ namespace ChatSignalR.Server
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            //builder.Services.AddTransient<IChatRepository, ChatRepository>();
-            //builder.Services.AddTransient<IUserRepository, UserRepository>();
             builder.Services.AddTransient<IMessageRepository, MessageRepository>();
 
-            //builder.Services.AddTransient<ChatService>();
-            //builder.Services.AddTransient<UserService>();
             builder.Services.AddSingleton<ITextAnalyticsService, TextAnalyticsService>(provider =>
             {
                 var endpoint = builder.Configuration["Azure:Cognitive:ConnectionString"];
@@ -29,10 +24,11 @@ namespace ChatSignalR.Server
 
                 return new TextAnalyticsService(endpoint, key);
             });
+
             builder.Services.AddTransient<IMessageService, MessageService>();
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
             builder.Services.AddSignalR()
