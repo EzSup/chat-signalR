@@ -6,6 +6,7 @@ using ChatSignalR.DataAccess.AzureSQL;
 using ChatSignalR.DataAccess.AzureSQL.Repositories;
 using ChatSignalR.Server.Hubs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ChatSignalR.Server
 {
@@ -13,7 +14,7 @@ namespace ChatSignalR.Server
     {
         public static void Main(string[] args)
         {
-            //
+            
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddTransient<IMessageRepository, MessageRepository>();
@@ -29,6 +30,10 @@ namespace ChatSignalR.Server
             builder.Services.AddTransient<IMessageService, MessageService>();
 
             builder.Services.AddControllers();
+            builder.Logging.ClearProviders(); // Очистити існуючі провайдери (опціонально)
+            builder.Logging.AddConsole(); // Додати логування в консоль
+            builder.Logging.AddDebug();   // Додати логування в Debug (можна переглядати в IDE)
+            builder.Logging.AddAzureWebAppDiagnostics(); 
 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
