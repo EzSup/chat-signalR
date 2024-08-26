@@ -1,16 +1,32 @@
 ﻿@page "/"
-@rendermode InteractiveServer
+@using ChatSignalR.Client.Services
+@using Microsoft.AspNetCore.SignalR.Client
+@inject ChatHubService hubService
 @inject NavigationManager navigationManager
+<form @onsubmit="Connect" class="form">
+    <h4>Join chat form</h4>
+    <input @bind="_chatName" placeholder="Enter chat name" @onkeypress="OnKeyPress" />
+    <input @bind="_userName" placeholder="Enter your name" @onkeypress="OnKeyPress" />
 
-<input @bind="_chatName" placeholder="Enter chat name" @onkeypress="OnKeyPress" />
-<input @bind="_userName" placeholder="Enter your name" @onkeypress="OnKeyPress" />
+    @if(hubService.IsConnecting())
+    {
+        <h1>Connecting to server...</h1>
+    }
 
-<button @onclick="Connect">Join chat</button>
+    <button type="submit" disabled="@(!hubService.IsConnected())">Join chat</button>
+</form>
+
 
 @code {
     private string? _chatName;
     private string? _userName;
 
+    protected override async Task OnInitializedAsync()
+    {
+        hubService.OnConnected += () => Console.WriteLine("Connected");
+        await hubService.Сonnect();
+        await base.OnInitializedAsync();        
+    }
 
     private void OnKeyPress(KeyboardEventArgs e)
     {
@@ -23,8 +39,11 @@
     private void Connect()
     {
         if(!string.IsNullOrWhiteSpace(_chatName) && !string.IsNullOrWhiteSpace(_userName))
-        {
-            navigationManager.NavigateTo($"/chat_chat={_chatName}&user={_userName}");
+        {   
+            if (hubService.IsConnected())
+            {                
+                navigationManager.NavigateTo($"/chat_chat={_chatName}&user={_userName}");
+            }
         }
     }
 }

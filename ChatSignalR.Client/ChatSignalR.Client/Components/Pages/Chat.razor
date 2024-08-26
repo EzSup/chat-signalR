@@ -1,23 +1,46 @@
 ﻿@page "/chat_chat={ChatName}&user={UserName}"
-@rendermode InteractiveServer
 @using ChatSignalR.Client.Services
+@using Microsoft.AspNetCore.SignalR.Client
 @inject NavigationManager NavigationManager
 @inject ChatHubService hubService
+@inject IJSRuntime JS
 
-@using Microsoft.AspNetCore.SignalR.Client
+<div class="chat-container">
+    <div class="chat-header">
+        <h2>Chat: <strong>@ChatName</strong></h2>
+        <h3>User: <strong>@UserName</strong></h3>
+        <button class="leave-btn" @onclick="LeaveChat">Leave Chat</button>
+    </div>
 
-<h3>Chat <strong>@ChatName</strong></h3>
-<h3>User name: <strong>@UserName</strong></h3>
-<input @bind="_message" placeholder="Enter your message" @onkeypress="OnKeyPress" />
-<button @onclick="SendMessage">Send</button>
-<button @onclick="LeaveChat">Leave Chat</button>
+    <ul class="messages-list" @ref="messageListElement">
+        @if(_messages.Count > 0){
+            @foreach (var msg in _messages.ToList())
+            {
+                <li class="message-item" style="background-color:@GetBackgroundColor(msg.Sentiment)">
+                    <strong class="message-user">@msg.UserName</strong>:
+                    <span class="message-text">@msg.MessageText</span>
+                    <span class="message-sentiment"><i>Sentiment: @msg.Sentiment</i></span>
+                    <span class="message-sentiment"><i>@msg.SentTime.ToLocalTime().ToShortDateString() @msg.SentTime.ToLocalTime().ToShortTimeString()</i></span>
+                </li>
+            }
+        }
+        else
+        {
+            <h1>Loading messages list</h1>    
+        }
+    </ul>
 
-<ul>
-    @foreach (var msg in _messages)
-    {
-        <li><strong>@msg.UserName</strong>: @msg.MessageText <i>Sentiment: @msg.Sentiment</i></li>
+    <div class="chat-input-container">
+        <input class="message-input" @bind="_message" placeholder="Enter your message" @onkeypress="OnKeyPress" disabled="@(!hubService.IsConnected())" />
+        <button class="send-btn" @onclick="SendMessage">Send</button>
+    </div>
+</div>
+
+<script>
+    function scrollToBottom(element) {
+        element.scrollTop = element.scrollHeight;
     }
-</ul>
+</script>
 
 @code {
     [Parameter]
@@ -27,32 +50,39 @@
     private string? _message;
     private List<ChatMessage> _messages = new List<ChatMessage>();
 
-    protected override async Task OnInitializedAsync()
+    private ElementReference messageListElement;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (hubService.HubConnection.State == HubConnectionState.Disconnected)
+        if (_messages.Any())
         {
-            await hubService.StartAsync();
-            await hubService.HubConnection.SendAsync("JoinChat", ChatName, UserName);
+            await ScrollToBottom();
         }
-
-        hubService.HubConnection.On<IEnumerable<ChatMessage>>("RecieveMessagesList", (messages) =>
-            {
-                OnMessagesListRecieved(messages);
-            });
-
-        hubService.HubConnection.On<ChatMessage>("ReceiveMessage", (message) =>
-        {
-            OnMessageRecieved(message);
-        });
     }
 
-    private void OnMessagesListRecieved(IEnumerable<ChatMessage> messages)
+    private async Task ScrollToBottom()
+    {
+        await JS.InvokeVoidAsync("scrollToBottom", messageListElement);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (hubService.IsConnected())
+        {
+            hubService.OnMessageListReceived += (message) => MessagesListRecieved(message);
+            hubService.OnMessageReceived += (message) => MessageRecieved(message); 
+            await hubService.JoinChat(ChatName, UserName);
+        }
+        await base.OnInitializedAsync();    
+    }
+
+    private void MessagesListRecieved(IEnumerable<ChatMessage> messages)
     {
         _messages = messages.ToList();
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnMessageRecieved(ChatMessage message)
+    private void MessageRecieved(ChatMessage message)
     {
         _messages.Add(message);
         InvokeAsync(StateHasChanged);
@@ -62,14 +92,14 @@
     {
         if (!string.IsNullOrEmpty(_message))
         {
-            await hubService.HubConnection.SendAsync("SendMessage", ChatName, UserName, _message);
+            await hubService.SendMessage(ChatName, UserName, _message);
             _message = string.Empty;
         }
     }
 
     private async Task LeaveChat()
     {
-        await hubService.HubConnection.SendAsync("LeaveChat", ChatName, UserName);
+        await hubService.LeaveChat(ChatName, UserName);
         NavigationManager.NavigateTo("/");
     }
 
@@ -86,7 +116,18 @@
         await hubService.DisposeAsync();
     }
 
-    public record ChatMessage(string UserName, string MessageText, MessageSentiment Sentiment);
+    private string GetBackgroundColor(MessageSentiment sentiment)
+    {
+        switch (sentiment)
+        {
+            case MessageSentiment.Positive: return "#7dd87d";
+            case MessageSentiment.Negative: return "#be3144";
+            case MessageSentiment.Neutral: return "#e6e6e6";
+            default: return "#e6e6e6";
+        }
+    }
+
+    public record ChatMessage(string UserName, string MessageText, MessageSentiment Sentiment, DateTime SentTime);
 
     public enum MessageSentiment
     {
