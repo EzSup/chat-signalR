@@ -11,7 +11,7 @@ namespace ChatSignalR.Server.Hubs
     public interface IChatClient
     {
         public Task ReceiveMessage(MessageDto message);
-        public Task RecieveMessagesList(IEnumerable<MessageDto> messsages);
+        public Task ReceiveMessagesList(IEnumerable<MessageDto> messsages);
     }
 
     public class ChatHub : Hub<IChatClient>
@@ -30,8 +30,8 @@ namespace ChatSignalR.Server.Hubs
         {
             try
             {
-                var registrationResult = await _messageService.RegisterMessage(new MessageCreateDto(userName, chatName, message));
-                Message? newMessage = await _messageService.Get(registrationResult);
+                var messageId = await _messageService.RegisterMessage(new MessageCreateDto(userName, chatName, message));
+                Message? newMessage = await _messageService.Get(messageId);
                 if(newMessage is null)
                     return;
                 await Clients.Group(chatName).ReceiveMessage(new MessageDto(newMessage));
@@ -39,8 +39,7 @@ namespace ChatSignalR.Server.Hubs
             catch (Exception ex)
             {
                 _logger.LogError(ex.ToString());
-            }
-            
+            }            
         }
 
         public async Task JoinChat(string chatName, string userName)
@@ -49,24 +48,22 @@ namespace ChatSignalR.Server.Hubs
             {
                 await Groups.AddToGroupAsync(Context.ConnectionId, chatName);
                 var messages = await _messageService.GetChatHistory(chatName);
-                var messagesDtos = messages.Select(message => new MessageDto(message.AuthorName, message.MessageContent, message.Sentiment));
-                await Clients.Client(Context.ConnectionId).RecieveMessagesList(messagesDtos);
+                var messagesDtos = messages.Select(message => new MessageDto(message.AuthorName, message.MessageContent, message.Sentiment, message.Created));
+                await Clients.Client(Context.ConnectionId).ReceiveMessagesList(messagesDtos);
                 await SendMessage(chatName, "Admin", $"{userName} just joined the chat!");
             }
             catch(Exception ex)
             {
                 _logger.LogError(ex.ToString());
-            }
-            
+            }            
         }
 
         public async Task LeaveChat(string chatName, string userName)
         {
             try
             {
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatName);
                 await SendMessage(chatName, "Admin", $"{userName} just left the chat!");
-                Context.Abort();
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, chatName);
             }
             catch (Exception ex)
             {

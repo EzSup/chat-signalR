@@ -14,63 +14,20 @@ namespace ChatSignalR.Server
     {
         public static void Main(string[] args)
         {
-            
+
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddTransient<IMessageRepository, MessageRepository>();
+            builder.Configuration.AddUserSecrets<Program>();
 
-            builder.Services.AddSingleton<ITextAnalyticsService, TextAnalyticsService>(provider =>
-            {
-                var endpoint = builder.Configuration["Azure:Cognitive:ConnectionString"];
-                var key = builder.Configuration["Azure:Cognitive:key"];
+            builder.Services.AddSignalR();
+            builder.Services.AddCors();
 
-                return new TextAnalyticsService(endpoint, key);
-            });
-
-            builder.Services.AddTransient<IMessageService, MessageService>();
-
-            builder.Services.AddControllers();
-            builder.Logging.ClearProviders(); // Очистити існуючі провайдери (опціонально)
-            builder.Logging.AddConsole(); // Додати логування в консоль
-            builder.Logging.AddDebug();   // Додати логування в Debug (можна переглядати в IDE)
-            builder.Logging.AddAzureWebAppDiagnostics(); 
-
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-            builder.Services.AddSignalR()
-                .AddAzureSignalR();
-
-            var dbcon = builder.Configuration["ConnectionStrings:DefaultConnection"];
-
-            builder.Services.AddDbContext<ChatDbContext>(
-                options =>
-                {
-                    options.UseSqlServer(builder.Configuration["ConnectionStrings:DefaultConnection"], sqlServerOptionsAction: sqlOptions =>
-                    {
-                        sqlOptions.EnableRetryOnFailure(
-                            maxRetryCount: 5, 
-                            maxRetryDelay: TimeSpan.FromSeconds(30), 
-                            errorNumbersToAdd: null);
-                    });
-                   
-                });
+            var startup = new Startup(builder.Configuration);
+            startup.ConfigureServices(builder.Services);
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-            app.MapHub<ChatHub>("/chat");
-
-            app.MapControllers();
+            startup.Configure(app, app.Environment);
 
             app.Run();
         }

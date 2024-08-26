@@ -7,22 +7,24 @@ namespace ChatSignalR.Server.DTOs
         public string UserName { get; set; }
         public string MessageText { get; set; }
         public MessageSentiment Sentiment { get; set; }
+        public DateTime SentTime { get; set; }
 
 
-
-        public MessageDto(string UserName, string MessageText, MessageSentiment Sentiment)
+        public MessageDto(string? UserName, string? MessageText, MessageSentiment? Sentiment, DateTime? SentTime)
         {
-            this.UserName = UserName;
-            this.MessageText = MessageText;
-            this.Sentiment = Sentiment;
+            this.UserName = UserName ?? "unknown";
+            this.MessageText = MessageText ?? "no data";
+            this.Sentiment = Sentiment ?? MessageSentiment.Neutral;
+            this.SentTime = SentTime ?? DateTime.MinValue;
         }
 
-        public MessageDto(string UserName, string MessageText) : this(UserName, MessageText, MessageSentiment.Neutral) { }
+        public MessageDto(string? UserName, string? MessageText, DateTime? SentTime) : this(UserName, MessageText, null, SentTime) { }
 
         public MessageDto(Message message) : 
-            this(message?.AuthorName ?? "unknown", 
-                message?.MessageContent ?? "no data", 
-                message?.Sentiment ?? MessageSentiment.Neutral)
+            this(message?.AuthorName, 
+                message?.MessageContent, 
+                message?.Sentiment,
+                message?.Created)
         {  }
     }
 
