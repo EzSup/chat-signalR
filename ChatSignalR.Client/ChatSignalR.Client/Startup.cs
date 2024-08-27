@@ -23,7 +23,7 @@ namespace ChatSignalR.Client
                 config.SnackbarConfiguration.HideTransitionDuration = 500;
                 config.SnackbarConfiguration.ShowTransitionDuration = 200;                
             });
-            services.AddSingleton<ChatHubService>(props =>
+            services.AddSingleton<IChatHubService ,ChatHubService>(props =>
             {
                 return new ChatHubService(Configuration["API:ConnectionLink"]);
             });            

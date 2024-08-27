@@ -5,7 +5,7 @@ using static ChatSignalR.Client.Components.Pages.Chat;
 
 namespace ChatSignalR.Client.Services
 {
-    public class ChatHubService : IAsyncDisposable
+    public class ChatHubService : IChatHubService
     {
         private readonly HubConnection _hubConnection;
 
