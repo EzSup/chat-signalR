@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
+using ChatSignalR.Client.Models;
 using static ChatSignalR.Client.Components.Pages.Chat;
 
 namespace ChatSignalR.Client.Services
@@ -8,36 +9,21 @@ namespace ChatSignalR.Client.Services
     {
         private readonly HubConnection _hubConnection;
 
+        public event Action? OnConnected;
+        public event Action<IEnumerable<ChatMessage>>? OnMessageListReceived;
+        public event Action<ChatMessage>? OnMessageReceived;
+
         public ChatHubService(string link)
         {
             _hubConnection = new HubConnectionBuilder()
                 .WithUrl(link)
                 .WithAutomaticReconnect()
-                .Build();
-
-
-            _hubConnection.On<IEnumerable<ChatMessage>>("ReceiveMessagesList", (messages) =>
-            {
-                if (OnMessageListReceived != null)
-                {
-                    OnMessageListReceived.Invoke(messages);
-                }
-            });
-
-            _hubConnection.On<ChatMessage>("ReceiveMessage", (message) =>
-            {
-                if (OnMessageReceived != null)
-                {
-                    OnMessageReceived.Invoke(message);
-                }
-            });
-
+                .Build();            
         }
-
-        //public HubConnection HubConnection { get { return _hubConnection; } private set { } }
 
         public async Task JoinChat(string chatName, string userName)
         {
+
             await _hubConnection.InvokeAsync("JoinChat", chatName, userName);
         }
 
@@ -50,15 +36,9 @@ namespace ChatSignalR.Client.Services
         {
             if (IsConnected())
             {
-                await _hubConnection.InvokeAsync("JoinChat", chatName, userName);
+                await _hubConnection.InvokeAsync("LeaveChat", chatName, userName);
             }
-        }
-
-        //events for future snackbar info messages showing
-        public event Func<Task> OnConnectedAsync;
-        public event Action OnConnected;
-        public event Action<IEnumerable<ChatMessage>> OnMessageListReceived;
-        public event Action<ChatMessage> OnMessageReceived;
+        }       
 
         public bool IsConnected()
         {
@@ -74,14 +54,26 @@ namespace ChatSignalR.Client.Services
         {
             if (_hubConnection.State == HubConnectionState.Disconnected)
             {
+                _hubConnection.On<ChatMessage>("ReceiveMessage", (message) =>
+                {
+                    if (OnMessageReceived != null)
+                    {
+                        OnMessageReceived.Invoke(message);
+                    }
+                });
+
+                _hubConnection.On<IEnumerable<ChatMessage>>("ReceiveMessagesList", (messages) =>
+                {
+                    if (OnMessageListReceived != null)
+                    {
+                        OnMessageListReceived.Invoke(messages);
+                    }
+                });
+
                 await _hubConnection.StartAsync();
                 _hubConnection.Closed += Retry;
             }
-            if (IsConnected() && OnConnectedAsync != null && OnConnected != null)
-            {
-                await OnConnectedAsync.Invoke();
-                OnConnected.Invoke();
-            }
+            await DoActionsIfConnected();
         }
 
         public async ValueTask DisposeAsync()
@@ -95,8 +87,16 @@ namespace ChatSignalR.Client.Services
         private async Task Retry(Exception ex)
         {
             Console.WriteLine($"Connection closed due to error: {ex}");
-            await Task.Delay(1000);
             await _hubConnection.StartAsync();
+            await DoActionsIfConnected();
+        }
+
+        private async Task DoActionsIfConnected()
+        {
+            if (IsConnected())
+            {
+                OnConnected?.Invoke();
+            }
         }
     }
 }

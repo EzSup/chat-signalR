@@ -1,21 +1,28 @@
 ﻿@page "/"
-@using ChatSignalR.Client.Services
-@using Microsoft.AspNetCore.SignalR.Client
-@inject ChatHubService hubService
-@inject NavigationManager navigationManager
-<form @onsubmit="Connect" class="form">
-    <h4>Join chat form</h4>
-    <input @bind="_chatName" placeholder="Enter chat name" @onkeypress="OnKeyPress" />
-    <input @bind="_userName" placeholder="Enter your name" @onkeypress="OnKeyPress" />
+@inject ISnackbar snackbarService;
+@inject IJSRuntime js;
+
+<form @onsubmit="Connect" class="container">
+    <h4>Joining the chat form</h4>
+    <input @bind="_chatName" placeholder="Enter chat name" @onkeypress="OnKeyPress" disabled="@(!hubService.IsConnected())" />
+    <input @bind="_userName" placeholder="Enter your name" @onkeypress="OnKeyPress" disabled="@(!hubService.IsConnected())" />
 
     @if(hubService.IsConnecting())
     {
-        <h1>Connecting to server...</h1>
+        <div>
+            <MudProgressCircular Style="position: fixed; top: 5px; left: 5px;" Color="Color.Info" Size="Size.Large" Indeterminate="true" />
+        </div>
+        
     }
 
     <button type="submit" disabled="@(!hubService.IsConnected())">Join chat</button>
 </form>
 
+<script>
+    function alertConnected(){
+        alert("connected!");
+    }
+</script>
 
 @code {
     private string? _chatName;
@@ -23,7 +30,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        hubService.OnConnected += () => Console.WriteLine("Connected");
+        hubService.OnConnected += () => snackbarService.Add("Connected to the server.", Severity.Info);
         await hubService.Сonnect();
         await base.OnInitializedAsync();        
     }
@@ -38,12 +45,9 @@
 
     private void Connect()
     {
-        if(!string.IsNullOrWhiteSpace(_chatName) && !string.IsNullOrWhiteSpace(_userName))
+        if (!string.IsNullOrWhiteSpace(_chatName) && !string.IsNullOrWhiteSpace(_userName) && hubService.IsConnected())
         {   
-            if (hubService.IsConnected())
-            {                
-                navigationManager.NavigateTo($"/chat_chat={_chatName}&user={_userName}");
-            }
+            navigationManager.NavigateTo($"/chat_chat={_chatName}&user={_userName}");
         }
     }
 }

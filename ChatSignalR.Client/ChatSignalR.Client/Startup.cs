@@ -2,6 +2,7 @@
 using ChatSignalR.Client.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
+using MudBlazor.Services;
 
 namespace ChatSignalR.Client
 {
@@ -16,6 +17,12 @@ namespace ChatSignalR.Client
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMudServices(config =>
+            {
+                config.SnackbarConfiguration.VisibleStateDuration = 1000;
+                config.SnackbarConfiguration.HideTransitionDuration = 500;
+                config.SnackbarConfiguration.ShowTransitionDuration = 200;                
+            });
             services.AddSingleton<ChatHubService>(props =>
             {
                 return new ChatHubService(Configuration["API:ConnectionLink"]);

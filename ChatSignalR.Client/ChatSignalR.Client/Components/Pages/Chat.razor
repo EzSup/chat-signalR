@@ -1,32 +1,35 @@
 ﻿@page "/chat_chat={ChatName}&user={UserName}"
-@using ChatSignalR.Client.Services
-@using Microsoft.AspNetCore.SignalR.Client
-@inject NavigationManager NavigationManager
-@inject ChatHubService hubService
+@using ChatSignalR.Client.Models
 @inject IJSRuntime JS
 
-<div class="chat-container">
+<div class="container chat-container">
     <div class="chat-header">
         <h2>Chat: <strong>@ChatName</strong></h2>
         <h3>User: <strong>@UserName</strong></h3>
         <button class="leave-btn" @onclick="LeaveChat">Leave Chat</button>
     </div>
 
-    <ul class="messages-list" @ref="messageListElement">
+    <ul class="messages-list" @ref="_messageListElement">
         @if(_messages.Count > 0){
             @foreach (var msg in _messages.ToList())
             {
-                <li class="message-item" style="background-color:@GetBackgroundColor(msg.Sentiment)">
-                    <strong class="message-user">@msg.UserName</strong>:
+                <li class="message-item" style="background-color:@GetBackgroundColor(msg.Sentiment); float:@(msg.UserName == UserName ? "right" : "left");">
+                    <strong class="message-user">@msg.UserName</strong>
                     <span class="message-text">@msg.MessageText</span>
                     <span class="message-sentiment"><i>Sentiment: @msg.Sentiment</i></span>
-                    <span class="message-sentiment"><i>@msg.SentTime.ToLocalTime().ToShortDateString() @msg.SentTime.ToLocalTime().ToShortTimeString()</i></span>
+                    <span class="message-sentiment"><i>Sent @msg.SentTime.ToLocalTime().ToString("dd.mm HH:MM")</i></span>
                 </li>
             }
-        }
+        }        
         else
         {
-            <h1>Loading messages list</h1>    
+            <MudProgressCircular Color="Color.Info" Size="Size.Large" Indeterminate="true" 
+                Style="position: absolute !important;
+                       top: 200px;
+                       margin: auto;
+                       width: 24vw;
+                       height: 24vw;
+                       left: 38vw;"  />
         }
     </ul>
 
@@ -44,13 +47,13 @@
 
 @code {
     [Parameter]
-    public string ChatName { get; set; }
+    public string ChatName { get; set; } = "";
     [Parameter]
-    public string UserName { get; set; }
+    public string UserName { get; set; } = "";
     private string? _message;
     private List<ChatMessage> _messages = new List<ChatMessage>();
 
-    private ElementReference messageListElement;
+    private ElementReference _messageListElement;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -62,7 +65,7 @@
 
     private async Task ScrollToBottom()
     {
-        await JS.InvokeVoidAsync("scrollToBottom", messageListElement);
+        await JS.InvokeVoidAsync("scrollToBottom", _messageListElement);
     }
 
     protected override async Task OnInitializedAsync()
@@ -100,7 +103,7 @@
     private async Task LeaveChat()
     {
         await hubService.LeaveChat(ChatName, UserName);
-        NavigationManager.NavigateTo("/");
+        navigationManager.NavigateTo("/");
     }
 
     private void OnKeyPress(KeyboardEventArgs e)
@@ -109,28 +112,22 @@
         {
             SendMessage();
         }
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await hubService.DisposeAsync();
-    }
+    }    
 
     private string GetBackgroundColor(MessageSentiment sentiment)
     {
         switch (sentiment)
         {
             case MessageSentiment.Positive: return "#7dd87d";
-            case MessageSentiment.Negative: return "#be3144";
-            case MessageSentiment.Neutral: return "#e6e6e6";
+            case MessageSentiment.Negative: return "#ff6f3c";
+            case MessageSentiment.Neutral: return "#bae8e8";
             default: return "#e6e6e6";
         }
     }
 
-    public record ChatMessage(string UserName, string MessageText, MessageSentiment Sentiment, DateTime SentTime);
-
-    public enum MessageSentiment
+    
+    public async ValueTask DisposeAsync()
     {
-        Positive, Neutral, Negative, Mixed
+        await hubService.DisposeAsync();
     }
 }
