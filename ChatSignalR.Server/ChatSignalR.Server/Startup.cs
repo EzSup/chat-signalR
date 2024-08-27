@@ -5,6 +5,7 @@ using ChatSignalR.DataAccess.AzureSQL;
 using ChatSignalR.DataAccess.AzureSQL.Repositories;
 using ChatSignalR.Server.Hubs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace ChatSignalR.Server
@@ -47,9 +48,11 @@ namespace ChatSignalR.Server
 
             services.AddCors(options =>
             {
+                var allowedOrigins = Configuration.GetSection("AllowedClientsOrigins").Get<List<string>>();
+
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("https://chatreenbitclient-cvffbvh5fwbndvhy.eastus-01.azurewebsites.net/", "https://localhost:7031/")
+                    policy.WithOrigins(allowedOrigins.ToArray())
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials();

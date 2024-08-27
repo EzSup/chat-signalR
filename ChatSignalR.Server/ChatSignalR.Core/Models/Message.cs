@@ -1,5 +1,8 @@
 ﻿namespace ChatSignalR.DataAccess.AzureSQL.Models
 {
+    /// <summary>
+    /// A model of the message to be stored in database
+    /// </summary>
     public class Message
     {
         public Guid Id { get; set; }

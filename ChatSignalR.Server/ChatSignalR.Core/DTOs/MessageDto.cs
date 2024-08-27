@@ -2,6 +2,9 @@
 
 namespace ChatSignalR.Server.DTOs
 {
+    /// <summary>
+    /// A data transfer model of the message to be sent to the client
+    /// </summary>
     public record MessageDto
     {
         public string UserName { get; set; }

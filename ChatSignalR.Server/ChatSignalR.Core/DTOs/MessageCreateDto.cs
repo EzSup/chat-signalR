@@ -6,5 +6,8 @@ using System.Threading.Tasks;
 
 namespace ChatSignalR.Core.DTOs
 {
+    /// <summary>
+    /// A model with data required to create a new message
+    /// </summary>
     public record MessageCreateDto(string userName, string chatName, string messageContent);
 }
