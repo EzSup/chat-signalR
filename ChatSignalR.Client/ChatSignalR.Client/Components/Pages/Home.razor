@@ -30,6 +30,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        hubService.OnDisconnected += async (Exception ex) => snackbarService.Add("Disconnected from to the server.", Severity.Warning);
         hubService.OnConnected += () => snackbarService.Add("Connected to the server.", Severity.Info);
         await hubService.Сonnect();
         await base.OnInitializedAsync();        

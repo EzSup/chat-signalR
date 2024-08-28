@@ -4,6 +4,7 @@ namespace ChatSignalR.Client.Services
 {
     public interface IChatHubService : IAsyncDisposable
     {
+        event Func<Exception, Task>? OnDisconnected;
         event Action? OnConnected;
         event Action<IEnumerable<ChatMessage>>? OnMessageListReceived;
         event Action<ChatMessage>? OnMessageReceived;

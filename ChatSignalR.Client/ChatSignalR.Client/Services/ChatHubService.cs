@@ -9,6 +9,7 @@ namespace ChatSignalR.Client.Services
     {
         private readonly HubConnection _hubConnection;
 
+        public event Func<Exception, Task>? OnDisconnected;
         public event Action? OnConnected;
         public event Action<IEnumerable<ChatMessage>>? OnMessageListReceived;
         public event Action<ChatMessage>? OnMessageReceived;
@@ -71,6 +72,7 @@ namespace ChatSignalR.Client.Services
                 });
 
                 await _hubConnection.StartAsync();
+                _hubConnection.Closed += OnDisconnected;
                 _hubConnection.Closed += Retry;
             }
             await DoActionsIfConnected();
