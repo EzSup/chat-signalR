@@ -22,6 +22,10 @@ https://chatreenbitclient-cvffbvh5fwbndvhy.eastus-01.azurewebsites.net/
 1. ChatSignalR.Server - веб-проєкт, що містить хаб чату із усіма фукнціями, які може викликати при роботі із клієнтським проєктом.
 2. ChatSignalR.Core - бібліотека класів, що містить набори моделей, DTO, інтерфейси та сервіси із бізнес-логікою
 3. ChatSignalR.DataAccess.AzureSQL - бібліотека класів, що відповідає за взаємодію із базою даних MS SQL, використовуючи EF Core.
+
+### Приклад роботи проекту
+![image](https://github.com/user-attachments/assets/b95a05c3-3629-4a74-8423-c138dc189a1b)
+
 ## English version
 ### IMPORTANT NOTICE! 
 If, while viewing the project, you see the loading screen for an extended period, even after receiving the notification "Connected to the server," try refreshing the page. Such prolonged loading may occur for the first time after the page loads.
@@ -43,3 +47,6 @@ The backend project consists of three libraries:
 1. **ChatSignalR.Server** - a web project that contains the chat hub with all the functions that can be invoked when working with the client project.
 2. **ChatSignalR.Core** - a class library that contains models, DTOs, interfaces, and services with business logic.
 3. **ChatSignalR.DataAccess.AzureSQL** - a class library responsible for interacting with the MS SQL database using EF Core.
+
+### Project working example
+![image](https://github.com/user-attachments/assets/b95a05c3-3629-4a74-8423-c138dc189a1b)
